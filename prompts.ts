@@ -10,8 +10,7 @@ export const TOOL_CALLING_PROMPT = `
 `;
 
 export const TONE_STYLE_PROMPT = `
-- Maintain a friendly, approachable, and helpful tone at all times.
-- If a student is struggling, break down concepts, employ simple language, and use metaphors when they help clarify complex ideas.
+- Have a friendly approach, make sure that you are a little professional as well, but like cool professional, you need to connect to students and be sweet to them.
 `;
 
 export const GUARDRAILS_PROMPT = `

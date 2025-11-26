@@ -115,16 +115,17 @@ export default function Chat() {
       <div
         style={{
           position: "fixed",
-          top: "80px",
+          top: "100px",
           left: "50%",
           transform: "translateX(-50%)",
-          zIndex: 9999,
+          zIndex: 99999,
           display: "flex",
           gap: "10px",
-          backgroundColor: "white",
-          padding: "10px",
+          backgroundColor: "#ff0000",
+          padding: "15px",
           borderRadius: "12px",
-          boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+          boxShadow: "0 8px 16px rgba(0,0,0,0.3)",
+          border: "5px solid yellow",
         }}
       >
           {/* Vector Button */}

@@ -5,10 +5,19 @@ import { useChat } from "@ai-sdk/react";
 
 export default function Page() {
   const [mode, setMode] = useState<"vector" | "web">("vector");
+  const [text, setText] = useState("");
 
-  const { messages, input, handleInputChange, handleSubmit, status } = useChat({
+  const { messages, append, status } = useChat({
     body: { mode },
   });
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const value = text.trim();
+    if (!value) return;
+    setText("");
+    await append({ role: "user", content: value as any });
+  }
 
   return (
     <div
@@ -101,8 +110,8 @@ export default function Page() {
       {/* INPUT FORM */}
       <form onSubmit={handleSubmit} style={{ display: "flex", gap: "8px" }}>
         <input
-          value={input}
-          onChange={handleInputChange}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
           placeholder="Type a message..."
           style={{
             flex: 1,
@@ -130,4 +139,3 @@ export default function Page() {
     </div>
   );
 }
-

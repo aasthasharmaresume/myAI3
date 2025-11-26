@@ -1,94 +1,216 @@
-// @ts-nocheck
 "use client";
 
-import { useChat } from "@ai-sdk/react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import * as z from "zod";
 
-export default function Page() {
-  // useChat with the "old" helpers – we know they work at runtime,
-  // we just tell TypeScript to ignore types in this file.
-  const { messages, input, handleInputChange, handleSubmit, status } = useChat();
+import { Button } from "@/components/ui/button";
+import {
+  Field,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { useChat } from "@ai-sdk/react";
+import { ArrowUp, Eraser, Loader2, Plus, PlusIcon, Square } from "lucide-react";
+import { MessageWall } from "@/components/messages/message-wall";
+import { ChatHeader } from "@/app/parts/chat-header";
+import { ChatHeaderBlock } from "@/app/parts/chat-header";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UIMessage } from "ai";
+import { useEffect, useState, useRef } from "react";
+import { AI_NAME, CLEAR_CHAT_TEXT, OWNER_NAME, WELCOME_MESSAGE } from "@/config";
+import Image from "next/image";
+import Link from "next/link";
+
+const formSchema = z.object({
+  message: z
+    .string()
+    .min(1, "Message cannot be empty.")
+    .max(2000, "Message must be at most 2000 characters."),
+});
+
+const STORAGE_KEY = 'chat-messages';
+
+type StorageData = {
+  messages: UIMessage[];
+  durations: Record<string, number>;
+};
+
+const loadMessagesFromStorage = (): { messages: UIMessage[]; durations: Record<string, number> } => {
+  if (typeof window === 'undefined') return { messages: [], durations: {} };
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return { messages: [], durations: {} };
+
+    const parsed = JSON.parse(stored);
+    return {
+      messages: parsed.messages || [],
+      durations: parsed.durations || {},
+    };
+  } catch (error) {
+    console.error('Failed to load messages from localStorage:', error);
+    return { messages: [], durations: {} };
+  }
+};
+
+const saveMessagesToStorage = (messages: UIMessage[], durations: Record<string, number>) => {
+  if (typeof window === 'undefined') return;
+  try {
+    const data: StorageData = { messages, durations };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (error) {
+    console.error('Failed to save messages to localStorage:', error);
+  }
+};
+
+export default function Chat() {
+  const [isClient, setIsClient] = useState(false);
+  const [durations, setDurations] = useState<Record<string, number>>({});
+  const welcomeMessageShownRef = useRef<boolean>(false);
+
+  const stored = typeof window !== 'undefined' ? loadMessagesFromStorage() : { messages: [], durations: {} };
+  const [initialMessages] = useState<UIMessage[]>(stored.messages);
+
+  const { messages, sendMessage, status, stop, setMessages } = useChat({
+    messages: initialMessages,
+  });
+
+  useEffect(() => {
+    setIsClient(true);
+    setDurations(stored.durations);
+    setMessages(stored.messages);
+  }, []);
+
+  useEffect(() => {
+    if (isClient) {
+      saveMessagesToStorage(messages, durations);
+    }
+  }, [durations, messages, isClient]);
+
+  const handleDurationChange = (key: string, duration: number) => {
+    setDurations((prevDurations) => {
+      const newDurations = { ...prevDurations };
+      newDurations[key] = duration;
+      return newDurations;
+    });
+  };
+
+  useEffect(() => {
+    if (isClient && initialMessages.length === 0 && !welcomeMessageShownRef.current) {
+      const welcomeMessage: UIMessage = {
+        id: `welcome-${Date.now()}`,
+        role: "assistant",
+        parts: [
+          {
+            type: "text",
+            text: WELCOME_MESSAGE,
+          },
+        ],
+      };
+      setMessages([welcomeMessage]);
+      saveMessagesToStorage([welcomeMessage], {});
+      welcomeMessageShownRef.current = true;
+    }
+  }, [isClient, initialMessages.length, setMessages]);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      message: "",
+    },
+  });
+
+  function onSubmit(data: z.infer<typeof formSchema>) {
+    sendMessage({ text: data.message });
+    form.reset();
+  }
+
+  function clearChat() {
+    const newMessages: UIMessage[] = [];
+    const newDurations = {};
+    setMessages(newMessages);
+    setDurations(newDurations);
+    saveMessagesToStorage(newMessages, newDurations);
+    toast.success("Chat cleared");
+  }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        padding: "20px",
-        fontFamily: "system-ui, sans-serif",
-        backgroundColor: "#f5e4c3",
-      }}
-    >
-      <h1 style={{ fontSize: "28px", fontWeight: "bold", marginBottom: "10px" }}>
-        Simple Chat
-      </h1>
-
-      {/* CHAT MESSAGES */}
-      <div
-        style={{
-          border: "1px solid #ccc",
-          borderRadius: "8px",
-          padding: "10px",
-          marginBottom: "20px",
-          maxHeight: "60vh",
-          overflowY: "auto",
-          background: "white",
-        }}
-      >
-        {messages.map((m) => (
-          <div
-            key={m.id}
-            style={{
-              marginBottom: "8px",
-              textAlign: m.role === "user" ? "right" : "left",
-            }}
-          >
-            <div
-              style={{
-                display: "inline-block",
-                padding: "6px 10px",
-                borderRadius: "12px",
-                backgroundColor: m.role === "user" ? "black" : "#eee",
-                color: m.role === "user" ? "white" : "black",
-                maxWidth: "80%",
-              }}
-            >
-              {(m as any).content ?? JSON.stringify(m)}
-            </div>
-          </div>
-        ))}
-        {messages.length === 0 && (
-          <p style={{ color: "#777" }}>No messages yet. Say hi!</p>
-        )}
+  <div className="flex h-screen items-center justify-center font-sans dark:bg-black">
+    <main className="w-full dark:bg-black h-screen relative">
+      {/* Fixed header stays exactly as you had it */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-linear-to-b from-background via-background/50 to-transparent dark:bg-black overflow-visible pb-16">
+        <div className="relative overflow-visible">
+          <ChatHeader>
+            <ChatHeaderBlock />
+            <ChatHeaderBlock className="justify-center items-center">
+              <Avatar className="size-8 ring-1 ring-primary">
+                <AvatarImage src="/Unknown.png" />
+                <AvatarFallback>
+                  <Image src="/Unknown.png" alt="Logo" width={36} height={36} />
+                </AvatarFallback>
+              </Avatar>
+              <p className="tracking-tight">Chat with {AI_NAME}</p>
+            </ChatHeaderBlock>
+            <ChatHeaderBlock className="justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                className="cursor-pointer"
+                onClick={clearChat}
+              >
+                <Plus className="size-4" />
+                {CLEAR_CHAT_TEXT}
+              </Button>
+            </ChatHeaderBlock>
+          </ChatHeader>
+        </div>
       </div>
 
-      {/* INPUT FORM */}
-      <form onSubmit={handleSubmit} style={{ display: "flex", gap: "8px" }}>
-        <input
-          value={input}
-          onChange={handleInputChange}
-          placeholder="Type a message..."
-          style={{
-            flex: 1,
-            padding: "8px 10px",
-            borderRadius: "8px",
-            border: "1px solid #ccc",
-          }}
-        />
-        <button
-          type="submit"
-          disabled={status === "submitted" || status === "streaming"}
-          style={{
-            padding: "8px 16px",
-            borderRadius: "8px",
-            border: "none",
-            backgroundColor: "black",
-            color: "white",
-            fontWeight: "bold",
-            cursor: "pointer",
-          }}
-        >
-          {status === "submitted" || status === "streaming" ? "…" : "Send"}
-        </button>
-      </form>
-    </div>
-  );
+      {/* 🪟 Main chat area */}
+      <div className="pt-24 px-4 h-full flex justify-center">
+        <div className="chat-window w-full max-w-3xl flex flex-col gap-4 h-[calc(100vh-7rem)]">
+          {/* 💬 Messages list with bubbles */}
+          <div className="flex-1 overflow-y-auto">
+            {messages.map((m) => (
+              <div
+                key={m.id}
+                className={m.role === "user" ? "user-bubble" : "bot-bubble"}
+              >
+                {m.content}
+              </div>
+            ))}
+          </div>
+
+          {/* ✍️ Input bar */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const value = String(formData.get("message") || "").trim();
+              if (!value || status === "pending") return;
+
+              sendMessage({ content: value, role: "user" });
+              e.currentTarget.reset();
+            }}
+            className="mt-2"
+          >
+            <div className="input-bar w-full">
+              <input
+                name="message"
+                className="flex-1 bg-transparent outline-none"
+                placeholder="Ask me anything…"
+                disabled={status === "pending"}
+              />
+              <button type="submit" disabled={status === "pending"}>
+                {status === "pending" ? "Thinking…" : "Send"}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+);
 }

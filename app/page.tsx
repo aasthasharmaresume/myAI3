@@ -108,22 +108,25 @@ export default function Chat() {
           </ChatHeader>
         </div>
 
-        {/* 🔥 TOGGLE BUTTONS - ABSOLUTELY VISIBLE */}
-        <div
-          style={{
-            position: "fixed",
-            top: "80px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 999,
-            display: "flex",
-            gap: "10px",
-            backgroundColor: "white",
-            padding: "10px",
-            borderRadius: "12px",
-            boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-          }}
-        >
+        {/* 🔥 TOGGLE BUTTONS - MOVED OUTSIDE MAIN */}
+      </main>
+      
+      {/* Toggle buttons outside the max-w-3xl container */}
+      <div
+        style={{
+          position: "fixed",
+          top: "80px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 9999,
+          display: "flex",
+          gap: "10px",
+          backgroundColor: "white",
+          padding: "10px",
+          borderRadius: "12px",
+          boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+        }}
+      >
           {/* Vector Button */}
           <button
             onClick={() => {
@@ -166,7 +169,6 @@ export default function Chat() {
         </div>
 
         {/* CHAT MESSAGES */}
-        <div className="pt-28 pb-28 px-4 overflow-y-auto h-full">
           {messages.map((m) => (
             <div
               key={m.id}

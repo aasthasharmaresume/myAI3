@@ -128,4 +128,32 @@ body {
   background-color: #D4A373; /* Caramel Gold */
   color: #2A1E12; /* Deep brown text for perfect contrast */
 }
+/* Scrollbar styled with the letter B */
+::-webkit-scrollbar {
+  width: 26px; /* Wider to fit the letter */
+}
+
+::-webkit-scrollbar-track {
+  background: #D4A373; /* Caramel gold */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #8B5E3C;
+  color: white;
+  font-weight: 900;
+  font-family: sans-serif;
+  font-size: 18px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  content: "B";
+}
+
+/* <- THIS makes the B visible */
+::-webkit-scrollbar-thumb::after {
+  content: "B";
+  color: #fff;
+}
+
 

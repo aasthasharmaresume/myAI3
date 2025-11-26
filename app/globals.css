@@ -124,10 +124,12 @@
     @apply bg-card text-card-foreground px-2 py-1 rounded-full hover:underline hover:scale-105 transition-all duration-100 !text-foreground !no-underline border-input border;
   }
 }
+/* 🌅 Background + text color */
 body {
-  background-color: #D4A373; /* Caramel Gold */
-  color: #2A1E12; /* Deep brown text for perfect contrast */
+  background: linear-gradient(to bottom, #D4A373 0%, #F6E6C4 100%);
+  color: #2A1E12;
 }
+
 /* ✨ Premium Gold Shimmer Scrollbar */
 ::-webkit-scrollbar {
   width: 12px;
@@ -140,7 +142,8 @@ body {
 
 /* Gold sparkle thumb */
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(45deg,
+  background: linear-gradient(
+    45deg,
     #E6C97E,
     #C89F5A,
     #F9E7B5,
@@ -155,7 +158,8 @@ body {
 
 /* Glow brighter on hover */
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(45deg,
+  background: linear-gradient(
+    45deg,
     #F6DFA2,
     #D1A85E,
     #FFF2C9,
@@ -166,9 +170,72 @@ body {
   animation: gold-shimmer 1.8s linear infinite;
 }
 
-/* Animation */
 @keyframes gold-shimmer {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* 🪟 Chat window container */
+.chat-window {
+  border-radius: 20px;
+  box-shadow: 0px 10px 40px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  padding: 20px;
+}
+
+/* 💬 Bot message bubble */
+.bot-bubble {
+  background: #d4a373;
+  color: #ffffff;
+  border-radius: 18px;
+  padding: 12px 18px;
+  margin: 6px 0;
+  box-shadow: 0px 3px 10px rgba(0, 0, 0, 0.08);
+  max-width: 70ch;
+}
+
+/* 👤 User message bubble */
+.user-bubble {
+  background: #fff3dd;
+  color: #5a3f29;
+  border-radius: 18px;
+  padding: 12px 18px;
+  margin: 6px 0;
+  margin-left: auto; /* push to right */
+  box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.05);
+  max-width: 70ch;
+}
+
+/* ✍️ Input bar styling */
+.input-bar {
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  border-radius: 25px;
+  padding: 10px 16px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* General buttons (e.g. send / New) */
+button {
+  background: #c89f5a;
+  color: #2a1e12;
+  border-radius: 20px;
+  padding: 8px 14px;
+  border: none;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+button:hover {
+  background: #e6c97e;
+  box-shadow: 0px 0px 10px #f9e7b5;
 }

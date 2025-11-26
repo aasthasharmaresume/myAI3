@@ -128,46 +128,46 @@ body {
   background-color: #D4A373; /* Caramel Gold */
   color: #2A1E12; /* Deep brown text for perfect contrast */
 }
-/* ✨ Glitter Red Scrollbar ✨ */
+/* ✨ Premium Gold Shimmer Scrollbar */
 ::-webkit-scrollbar {
   width: 12px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #FFE4E4;
+  background: #D4A373; /* Caramel gold track */
   border-radius: 10px;
 }
 
-/* Glitter texture on thumb */
+/* Gold sparkle thumb */
 ::-webkit-scrollbar-thumb {
   background: linear-gradient(45deg,
-    #ff4d6d,
-    #c70039,
-    #ffb3c6,
-    #ff4d6d,
-    #c70039
+    #E6C97E,
+    #C89F5A,
+    #F9E7B5,
+    #E6C97E,
+    #C89F5A
   );
   background-size: 200% 200%;
-  animation: glitter-scroll 2.5s linear infinite;
+  animation: gold-shimmer 3s linear infinite;
   border-radius: 10px;
-  border: 2px solid #ffccd5;
+  border: 2px solid #f4dba0; /* Light gold border */
 }
 
-/* Hover = brighter sparkle */
+/* Glow brighter on hover */
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(45deg,
-    #ff809a,
-    #d8004b,
-    #ffc7d6,
-    #ff809a,
-    #d8004b
+    #F6DFA2,
+    #D1A85E,
+    #FFF2C9,
+    #F6DFA2,
+    #D1A85E
   );
   background-size: 200% 200%;
-  animation: glitter-scroll 1.5s linear infinite;
+  animation: gold-shimmer 1.8s linear infinite;
 }
 
-/* ✨ Animation that creates glitter movement */
-@keyframes glitter-scroll {
+/* Animation */
+@keyframes gold-shimmer {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }

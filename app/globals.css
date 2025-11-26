@@ -124,3 +124,8 @@
     @apply bg-card text-card-foreground px-2 py-1 rounded-full hover:underline hover:scale-105 transition-all duration-100 !text-foreground !no-underline border-input border;
   }
 }
+body {
+  background-color: #B41313; /* Warm deep red */
+  color: white;
+}
+

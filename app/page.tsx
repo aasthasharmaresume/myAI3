@@ -38,13 +38,12 @@ const save = (messages: UIMessage[]) => {
 
 // ------------------------------------------------
 export default function Chat() {
-  const [mode, setMode] = useState<"vector" | "web">("vector");
+  const [mode, setMode] = useState<"vector" | "web">("vector"); // 🔥 Toggle State
 
   const [initialMessages] = useState<UIMessage[]>(loadSaved());
   const { messages, sendMessage, status, setMessages } = useChat({
-    api: "/api/chat",
-    body: { mode },
     initialMessages,
+    body: { mode }, // Pass mode to backend
   });
 
   const welcomed = useRef(false);
@@ -61,14 +60,7 @@ export default function Chat() {
       save([welcome]);
       welcomed.current = true;
     }
-  }, [setMessages, messages.length]);
-
-  // Save messages
-  useEffect(() => {
-    if (messages.length > 0) {
-      save(messages);
-    }
-  }, [messages]);
+  }, []);
 
   // form
   const form = useForm({
@@ -81,11 +73,7 @@ export default function Chat() {
     const text = data.message.trim();
     if (!text) return;
 
-    sendMessage({
-      role: "user",
-      content: text,
-    });
-
+    sendMessage({ role: "user", content: text });
     form.reset();
   }
 
@@ -120,47 +108,65 @@ export default function Chat() {
           </ChatHeader>
         </div>
 
-        {/* SIMPLE TOGGLE - Right after header */}
-        <div className="pt-20 px-4">
-          <div className="flex justify-center gap-2 py-4">
-            <button
-              onClick={() => {
-                setMode("vector");
-                toast.success("Switched to Vector Database");
-              }}
-              style={{
-                padding: "8px 16px",
-                borderRadius: "8px",
-                fontWeight: "600",
-                backgroundColor: mode === "vector" ? "#000" : "#fff",
-                color: mode === "vector" ? "#fff" : "#000",
-                border: "2px solid #000",
-              }}
-            >
-              📁 Vector DB
-            </button>
+        {/* 🔥 TOGGLE BUTTONS - ABSOLUTELY VISIBLE */}
+        <div
+          style={{
+            position: "fixed",
+            top: "80px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 999,
+            display: "flex",
+            gap: "10px",
+            backgroundColor: "white",
+            padding: "10px",
+            borderRadius: "12px",
+            boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+          }}
+        >
+          {/* Vector Button */}
+          <button
+            onClick={() => {
+              setMode("vector");
+              console.log("Mode changed to: vector");
+            }}
+            style={{
+              padding: "10px 20px",
+              borderRadius: "8px",
+              border: "2px solid black",
+              backgroundColor: mode === "vector" ? "black" : "white",
+              color: mode === "vector" ? "white" : "black",
+              fontWeight: "bold",
+              cursor: "pointer",
+              fontSize: "14px",
+            }}
+          >
+            📁 Vector DB
+          </button>
 
-            <button
-              onClick={() => {
-                setMode("web");
-                toast.success("Switched to Web Search");
-              }}
-              style={{
-                padding: "8px 16px",
-                borderRadius: "8px",
-                fontWeight: "600",
-                backgroundColor: mode === "web" ? "#000" : "#fff",
-                color: mode === "web" ? "#fff" : "#000",
-                border: "2px solid #000",
-              }}
-            >
-              🌍 Web Search
-            </button>
-          </div>
+          {/* Web Button */}
+          <button
+            onClick={() => {
+              setMode("web");
+              console.log("Mode changed to: web");
+            }}
+            style={{
+              padding: "10px 20px",
+              borderRadius: "8px",
+              border: "2px solid black",
+              backgroundColor: mode === "web" ? "black" : "white",
+              color: mode === "web" ? "white" : "black",
+              fontWeight: "bold",
+              cursor: "pointer",
+              fontSize: "14px",
+            }}
+          >
+            🌍 Web Search
+          </button>
         </div>
 
         {/* CHAT MESSAGES */}
-        <div className="px-4 pb-28 overflow-y-auto" style={{ height: "calc(100vh - 250px)" }}>
+        <div className="pt-28 pb-28 px-4 overflow-y-auto h-full">
           {messages.map((m) => (
             <div
               key={m.id}
@@ -184,11 +190,7 @@ export default function Chat() {
             <input
               {...form.register("message")}
               className="flex-1 outline-none"
-              placeholder={
-                mode === "vector"
-                  ? "Ask about your documents..."
-                  : "Search the web..."
-              }
+              placeholder="Ask something..."
             />
             <button
               type="submit"
@@ -203,4 +205,3 @@ export default function Chat() {
     </div>
   );
 }
-

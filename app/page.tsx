@@ -53,7 +53,7 @@ export default function Chat() {
   const [initialMessages] = useState<UIMessage[]>(loadSaved());
   
   const { messages, sendMessage, status, setMessages } = useChat({
-    api: mode === "vector" ? "/api/chat/vector" : "/api/chat/web",
+    api: "/api/chat",
     body: { mode }, // Pass mode to API
   });
 
@@ -149,39 +149,39 @@ export default function Chat() {
           </ChatHeader>
         </div>
 
-        {/* 🔥 IMPROVED Toggle Bar */}
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-40 mt-4">
-          <div className="flex items-center gap-1 bg-white rounded-full p-1 shadow-lg">
-            {/* Vector DB Button */}
-            <button
-              onClick={() => handleModeChange("vector")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-200 ${
-                mode === "vector"
-                  ? "bg-black text-white shadow-md"
-                  : "bg-transparent text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <Database size={16} />
-              <span>Vector DB</span>
-            </button>
-
-            {/* Web Search Button */}
-            <button
-              onClick={() => handleModeChange("web")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-200 ${
-                mode === "web"
-                  ? "bg-black text-white shadow-md"
-                  : "bg-transparent text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <Globe size={16} />
-              <span>Web Search</span>
-            </button>
-          </div>
-        </div>
-
         {/* CHAT MESSAGES */}
-        <div className="pt-32 pb-28 px-4 overflow-y-auto h-full">
+        <div className="pt-20 pb-28 px-4 overflow-y-auto h-full">
+          {/* 🔥 IMPROVED Toggle Bar - Inside Messages Container */}
+          <div className="flex justify-center mb-6 sticky top-0 z-10 py-4 bg-[#e7c08c]">
+            <div className="flex items-center gap-1 bg-white rounded-full p-1 shadow-lg">
+              {/* Vector DB Button */}
+              <button
+                onClick={() => handleModeChange("vector")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-200 ${
+                  mode === "vector"
+                    ? "bg-black text-white shadow-md"
+                    : "bg-transparent text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                <Database size={16} />
+                <span>Vector DB</span>
+              </button>
+
+              {/* Web Search Button */}
+              <button
+                onClick={() => handleModeChange("web")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-200 ${
+                  mode === "web"
+                    ? "bg-black text-white shadow-md"
+                    : "bg-transparent text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                <Globe size={16} />
+                <span>Web Search</span>
+              </button>
+            </div>
+          </div>
+          
           {messages.map((m) => (
             <div key={m.id} className="mb-4">
               <div

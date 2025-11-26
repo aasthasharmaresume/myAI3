@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { AI_NAME, CLEAR_CHAT_TEXT, WELCOME_MESSAGE } from "@/config";
 import { UIMessage } from "ai";
 import Image from "next/image";
-import { Plus, Database, Globe } from "lucide-react";
+import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { ChatHeader, ChatHeaderBlock } from "@/app/parts/chat-header";
 
@@ -21,7 +21,6 @@ const formSchema = z.object({
 });
 
 const STORAGE_KEY = "chat-history";
-const MODE_KEY = "chat-mode";
 
 const loadSaved = (): UIMessage[] => {
   if (typeof window === "undefined") return [];
@@ -37,24 +36,15 @@ const save = (messages: UIMessage[]) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
 };
 
-const loadMode = (): "vector" | "web" => {
-  if (typeof window === "undefined") return "vector";
-  return (localStorage.getItem(MODE_KEY) as "vector" | "web") || "vector";
-};
-
-const saveMode = (mode: "vector" | "web") => {
-  if (typeof window !== "undefined")
-    localStorage.setItem(MODE_KEY, mode);
-};
-
 // ------------------------------------------------
 export default function Chat() {
-  const [mode, setMode] = useState<"vector" | "web">(loadMode());
+  const [mode, setMode] = useState<"vector" | "web">("vector");
+
   const [initialMessages] = useState<UIMessage[]>(loadSaved());
-  
   const { messages, sendMessage, status, setMessages } = useChat({
     api: "/api/chat",
-    body: { mode }, // Pass mode to API
+    body: { mode },
+    initialMessages,
   });
 
   const welcomed = useRef(false);
@@ -73,19 +63,12 @@ export default function Chat() {
     }
   }, [setMessages, messages.length]);
 
-  // Save messages to localStorage
+  // Save messages
   useEffect(() => {
     if (messages.length > 0) {
       save(messages);
     }
   }, [messages]);
-
-  // Handle mode change
-  const handleModeChange = (newMode: "vector" | "web") => {
-    setMode(newMode);
-    saveMode(newMode);
-    toast.success(`Switched to ${newMode === "vector" ? "Vector Database" : "Web Search"} mode`);
-  };
 
   // form
   const form = useForm({
@@ -98,8 +81,8 @@ export default function Chat() {
     const text = data.message.trim();
     if (!text) return;
 
-    sendMessage({ 
-      role: "user", 
+    sendMessage({
+      role: "user",
       content: text,
     });
 
@@ -109,19 +92,7 @@ export default function Chat() {
   function clearChat() {
     setMessages([]);
     save([]);
-    welcomed.current = false;
     toast.success("Chat cleared");
-    
-    // Re-add welcome message
-    setTimeout(() => {
-      const welcome: UIMessage = {
-        id: `welcome-${Date.now()}`,
-        role: "assistant",
-        parts: [{ type: "text", text: WELCOME_MESSAGE }],
-      };
-      setMessages([welcome]);
-      save([welcome]);
-    }, 100);
   }
 
   // ---------------- UI ----------------
@@ -149,63 +120,59 @@ export default function Chat() {
           </ChatHeader>
         </div>
 
-        {/* CHAT MESSAGES */}
-        <div className="pt-20 pb-28 px-4 overflow-y-auto h-full">
-          {/* 🔥 IMPROVED Toggle Bar - Inside Messages Container */}
-          <div className="flex justify-center mb-6 sticky top-0 z-10 py-4 bg-[#e7c08c]">
-            <div className="flex items-center gap-1 bg-white rounded-full p-1 shadow-lg">
-              {/* Vector DB Button */}
-              <button
-                onClick={() => handleModeChange("vector")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-200 ${
-                  mode === "vector"
-                    ? "bg-black text-white shadow-md"
-                    : "bg-transparent text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                <Database size={16} />
-                <span>Vector DB</span>
-              </button>
+        {/* SIMPLE TOGGLE - Right after header */}
+        <div className="pt-20 px-4">
+          <div className="flex justify-center gap-2 py-4">
+            <button
+              onClick={() => {
+                setMode("vector");
+                toast.success("Switched to Vector Database");
+              }}
+              style={{
+                padding: "8px 16px",
+                borderRadius: "8px",
+                fontWeight: "600",
+                backgroundColor: mode === "vector" ? "#000" : "#fff",
+                color: mode === "vector" ? "#fff" : "#000",
+                border: "2px solid #000",
+              }}
+            >
+              📁 Vector DB
+            </button>
 
-              {/* Web Search Button */}
-              <button
-                onClick={() => handleModeChange("web")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-200 ${
-                  mode === "web"
-                    ? "bg-black text-white shadow-md"
-                    : "bg-transparent text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                <Globe size={16} />
-                <span>Web Search</span>
-              </button>
-            </div>
+            <button
+              onClick={() => {
+                setMode("web");
+                toast.success("Switched to Web Search");
+              }}
+              style={{
+                padding: "8px 16px",
+                borderRadius: "8px",
+                fontWeight: "600",
+                backgroundColor: mode === "web" ? "#000" : "#fff",
+                color: mode === "web" ? "#fff" : "#000",
+                border: "2px solid #000",
+              }}
+            >
+              🌍 Web Search
+            </button>
           </div>
-          
+        </div>
+
+        {/* CHAT MESSAGES */}
+        <div className="px-4 pb-28 overflow-y-auto" style={{ height: "calc(100vh - 250px)" }}>
           {messages.map((m) => (
-            <div key={m.id} className="mb-4">
-              <div
-                className={`max-w-[75%] px-4 py-3 rounded-xl ${
-                  m.role === "user"
-                    ? "ml-auto bg-black text-white"
-                    : "mr-auto bg-white text-black shadow"
-                }`}
-              >
-                <div className="whitespace-pre-wrap">{m.content}</div>
-              </div>
+            <div
+              key={m.id}
+              className={`max-w-[75%] px-4 py-3 rounded-xl mb-3 ${
+                m.role === "user"
+                  ? "ml-auto bg-black text-white"
+                  : "mr-auto bg-white text-black"
+              }`}
+            >
+              {m.content}
             </div>
           ))}
-          
-          {/* Loading indicator */}
-          {status === "pending" && (
-            <div className="max-w-[75%] mr-auto bg-white text-black shadow px-4 py-3 rounded-xl">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:0.2s]" />
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:0.4s]" />
-              </div>
-            </div>
-          )}
         </div>
 
         {/* INPUT */}
@@ -213,29 +180,23 @@ export default function Chat() {
           onSubmit={form.handleSubmit(onSubmit)}
           className="fixed bottom-6 left-1/2 -translate-x-1/2 max-w-2xl w-full px-4"
         >
-          <div className="flex items-center gap-2 bg-white rounded-xl shadow-lg px-4 py-3 border-2 border-gray-200 focus-within:border-black transition-colors">
+          <div className="flex items-center gap-2 bg-white rounded-xl shadow px-4 py-3">
             <input
               {...form.register("message")}
-              className="flex-1 outline-none text-gray-800 placeholder:text-gray-400"
+              className="flex-1 outline-none"
               placeholder={
                 mode === "vector"
                   ? "Ask about your documents..."
                   : "Search the web..."
               }
-              disabled={status === "pending"}
             />
             <button
               type="submit"
               disabled={status === "pending"}
-              className="bg-black text-white rounded-lg px-5 py-2 font-medium hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+              className="bg-black text-white rounded-lg px-4 py-2"
             >
               {status === "pending" ? "..." : "Send"}
             </button>
-          </div>
-          
-          {/* Mode indicator below input */}
-          <div className="text-center mt-2 text-xs text-gray-600">
-            Using: {mode === "vector" ? "📁 Vector Database" : "🌍 Web Search"}
           </div>
         </form>
       </main>

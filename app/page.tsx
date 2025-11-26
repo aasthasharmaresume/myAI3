@@ -1,122 +1,194 @@
 "use client";
 
+import { useChat } from "@ai-sdk/react";
+import { useEffect, useState, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import * as z from "zod";
 
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useChat } from "@ai-sdk/react";
-import { Plus } from "lucide-react";
-import { UIMessage } from "ai";
-import { useEffect, useState, useRef } from "react";
 import { AI_NAME, CLEAR_CHAT_TEXT, WELCOME_MESSAGE } from "@/config";
+import { UIMessage } from "ai";
 import Image from "next/image";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChatHeader } from "@/app/parts/chat-header";
-import { ChatHeaderBlock } from "@/app/parts/chat-header";
+import { Plus } from "lucide-react";
+import { toast } from "sonner";
+import { ChatHeader, ChatHeaderBlock } from "@/app/parts/chat-header";
 
 
-// ---------------------- FORM VALIDATION ---------------------- //
+// ---------------- VALIDATION ----------------
 const formSchema = z.object({
   message: z.string().min(1).max(2000),
 });
 
-const STORAGE_KEY = "chat-messages";
+const STORAGE_KEY = "chat-history";
 
-
-// ---------------------- LOCAL STORAGE HANDLING ---------------------- //
-const loadMessagesFromStorage = (): { messages: UIMessage[]; durations: Record<string, number> } => {
-  if (typeof window === "undefined") return { messages: [], durations: {} };
+const loadSaved = (): UIMessage[] => {
+  if (typeof window === "undefined") return [];
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) return { messages: [], durations: {} };
-    const parsed = JSON.parse(stored);
-    return { messages: parsed.messages || [], durations: parsed.durations || {} };
-  } catch {
-    return { messages: [], durations: {} };
-  }
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  } catch { return []; }
 };
 
-const saveMessagesToStorage = (messages: UIMessage[], durations: Record<string, number>) => {
-  if (typeof window === "undefined") return;
-  const data = { messages, durations };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+const save = (messages: UIMessage[]) => {
+  if (typeof window !== "undefined")
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
 };
 
 
-// ---------------------- COMPONENT ---------------------- //
+// ------------------------------------------------
 export default function Chat() {
-  // saved chat memory
-  const stored = typeof window !== "undefined" ? loadMessagesFromStorage() : { messages: [], durations: {} };
-  const [initialMessages] = useState<UIMessage[]>(stored.messages);
 
-  // main chat engine
-  const { messages, sendMessage, status, setMessages } = useChat({ messages: initialMessages });
+  const [mode, setMode] = useState<"vector" | "web">("vector"); // 🔥 Toggle State
 
-  // 🔥 VECTOR / WEB MODE SWITCH
-  const [mode, setMode] = useState<"vector" | "web">("vector");
+  const [initialMessages] = useState<UIMessage[]>(loadSaved());
+  const { messages, sendMessage, status, setMessages } = useChat({
+    messages: initialMessages,
+  });
 
+  const welcomed = useRef(false);
 
-  // Welcome message logic
-  const welcomeShown = useRef(false);
-
+  // Auto welcome message
   useEffect(() => {
-    if (!welcomeShown.current && messages.length === 0) {
+    if (!welcomed.current && messages.length === 0) {
       const welcome: UIMessage = {
-        id: "welcome-" + Date.now(),
+        id: `welcome-${Date.now()}`,
         role: "assistant",
         parts: [{ type: "text", text: WELCOME_MESSAGE }],
       };
       setMessages([welcome]);
-      saveMessagesToStorage([welcome], {});
-      welcomeShown.current = true;
+      save([welcome]);
+      welcomed.current = true;
     }
   }, []);
 
-
-  // form state
-  const form = useForm<z.infer<typeof formSchema>>({
+  // form
+  const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: { message: "" },
   });
 
-  function clearChat() {
-    setMessages([]);
-    saveMessagesToStorage([], {});
-    toast.success("Chat cleared");
-  }
 
-  // ---------------------- SEND ---------------------- //
-  function onSubmit(data: z.infer<typeof formSchema>) {
+  // ---------------- SEND ----------------
+  function onSubmit(data: any) {
+    const text = data.message.trim();
+    if (!text) return;
+
     if (mode === "vector") {
-      sendMessage({ content: data.message, role: "user" }); // knowledge database
+      // normal Pinecone mode
+      sendMessage({ role: "user", content: text });
     } else {
-      // 🔥 Placeholder until we add web API
-      sendMessage({ content: `🌍 Web Search Mode → ${data.message}`, role: "user" });
+      // *** Web Mode Placeholder ***
+      sendMessage({ role: "user", content: "🌍 Web Search → " + text });
     }
+
     form.reset();
   }
 
+  function clearChat() {
+    setMessages([]);
+    save([]);
+    toast.success("Chat cleared");
+  }
 
-  // ---------------------- UI ---------------------- //
+
+  // ---------------- UI ----------------
   return (
-    <div className="flex h-screen items-center justify-center font-sans dark:bg-black">
-      <main className="w-full dark:bg-black h-screen relative">
+    <div className="h-screen w-full flex justify-center items-center font-sans bg-[#e7c08c]">
+      <main className="w-full h-full max-w-3xl relative">
 
         {/* HEADER */}
-        <div className="fixed top-0 left-0 right-0 z-50 bg-black pb-16">
+        <div className="fixed top-0 left-0 right-0 z-50 bg-[#d49a63] shadow py-3">
           <ChatHeader>
             <ChatHeaderBlock />
-            <ChatHeaderBlock className="justify-center items-center">
-              <Avatar className="size-8 ring-1 ring-primary">
+            <ChatHeaderBlock className="justify-center items-center gap-2">
+              <Avatar className="size-8 ring-2 ring-black">
                 <AvatarImage src="/Unknown.png" />
                 <AvatarFallback>
-                  <Image src="/Unknown.png" alt="Logo" width={36} height={36} />
+                  <Image src="/Unknown.png" alt="logo" width={36} height={36}/>
                 </AvatarFallback>
               </Avatar>
-              <p className="tracking-tight">Chat with {AI_NAME}</p>
+              <p className="font-semibold tracking-tight">Chat with {AI_NAME}</p>
             </ChatHeaderBlock>
             <ChatHeaderBlock className="justify-end">
-              <Button variant="outline" size="sm" onClick={clearChat}>
-                <Plus className="size-4" /> {CLEAR_CHAT_TEXT}
+              <Button size="sm" onClick={clearChat}>
+                <Plus size={14}/> {CLEAR_CHAT_TEXT}
+              </Button>
+            </ChatHeaderBlock>
+          </ChatHeader>
+        </div>
+
+
+        {/* 🔥 Toggle Bar */}
+        <div className="mt-20 flex justify-center gap-3 py-3">
+
+          {/* Vector */}
+          <button
+            onClick={() => setMode("vector")}
+            className={`px-4 py-2 rounded-lg font-medium ${
+              mode === "vector"
+                ? "bg-black text-white"
+                : "bg-white text-black"
+            }`}
+          >
+            📁 Vector DB
+          </button>
+
+          {/* Web */}
+          <button
+            onClick={() => setMode("web")}
+            className={`px-4 py-2 rounded-lg font-medium ${
+              mode === "web"
+                ? "bg-black text-white"
+                : "bg-white text-black"
+            }`}
+          >
+            🌍 Web Search
+          </button>
+
+        </div>
+
+
+        {/* CHAT MESSAGES */}
+        <div className="pt-6 pb-28 px-4 overflow-y-auto h-full">
+          {messages.map((m) => (
+            <div
+              key={m.id}
+              className={`max-w-[75%] px-4 py-3 rounded-xl mb-3 ${
+                m.role === "user"
+                ? "ml-auto bg-black text-white"
+                : "mr-auto bg-white text-black"
+              }`}
+            >
+              {m.content}
+            </div>
+          ))}
+        </div>
+
+
+        {/* INPUT */}
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 max-w-2xl w-full px-4"
+        >
+          <div className="flex items-center gap-2 bg-white rounded-xl shadow px-4 py-3">
+            <input
+              {...form.register("message")}
+              className="flex-1 outline-none"
+              placeholder="Ask something..."
+            />
+            <button
+              type="submit"
+              disabled={status === "pending"}
+              className="bg-black text-white rounded-lg px-4 py-2"
+            >
+              {status === "pending" ? "..." : "Send"}
+            </button>
+          </div>
+        </form>
+
+      </main>
+    </div>
+  );
+}
+

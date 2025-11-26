@@ -128,32 +128,47 @@ body {
   background-color: #D4A373; /* Caramel Gold */
   color: #2A1E12; /* Deep brown text for perfect contrast */
 }
-/* Scrollbar styled with the letter B */
+/* ✨ Glitter Red Scrollbar ✨ */
 ::-webkit-scrollbar {
-  width: 26px; /* Wider to fit the letter */
+  width: 12px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #D4A373; /* Caramel gold */
+  background: #FFE4E4;
+  border-radius: 10px;
 }
 
+/* Glitter texture on thumb */
 ::-webkit-scrollbar-thumb {
-  background: #8B5E3C;
-  color: white;
-  font-weight: 900;
-  font-family: sans-serif;
-  font-size: 18px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  content: "B";
+  background: linear-gradient(45deg,
+    #ff4d6d,
+    #c70039,
+    #ffb3c6,
+    #ff4d6d,
+    #c70039
+  );
+  background-size: 200% 200%;
+  animation: glitter-scroll 2.5s linear infinite;
+  border-radius: 10px;
+  border: 2px solid #ffccd5;
 }
 
-/* <- THIS makes the B visible */
-::-webkit-scrollbar-thumb::after {
-  content: "B";
-  color: #fff;
+/* Hover = brighter sparkle */
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(45deg,
+    #ff809a,
+    #d8004b,
+    #ffc7d6,
+    #ff809a,
+    #d8004b
+  );
+  background-size: 200% 200%;
+  animation: glitter-scroll 1.5s linear infinite;
 }
 
-
+/* ✨ Animation that creates glitter movement */
+@keyframes glitter-scroll {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}

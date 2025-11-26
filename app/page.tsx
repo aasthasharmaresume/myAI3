@@ -4,19 +4,15 @@ import { useState } from "react";
 import { useChat } from "@ai-sdk/react";
 
 export default function Page() {
-  const [mode, setMode] = useState<"vector" | "web">("vector");
   const [text, setText] = useState("");
+  const { messages, sendMessage, status } = useChat();  // 👈 no mode
 
-  const { messages, append, status } = useChat({
-    body: { mode },
-  });
-
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: any) {
     e.preventDefault();
     const value = text.trim();
     if (!value) return;
     setText("");
-    await append({ role: "user", content: value as any });
+    sendMessage({ role: "user", content: value as any });
   }
 
   return (
@@ -28,45 +24,9 @@ export default function Page() {
         backgroundColor: "#f5e4c3",
       }}
     >
-      <h1 style={{ fontSize: "28px", fontWeight: "bold", marginBottom: "10px" }}>
-        Simple Chat (Test)
+      <h1 style={{ fontSize: 28, fontWeight: "bold", marginBottom: 10 }}>
+        Simple Chat
       </h1>
-
-      <p style={{ marginBottom: "20px" }}>
-        Current mode: <strong>{mode}</strong>
-      </p>
-
-      {/* MODE TOGGLE BUTTONS */}
-      <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
-        <button
-          onClick={() => setMode("vector")}
-          style={{
-            padding: "8px 16px",
-            borderRadius: "8px",
-            border: "1px solid #000",
-            backgroundColor: mode === "vector" ? "black" : "white",
-            color: mode === "vector" ? "white" : "black",
-            fontWeight: "bold",
-            cursor: "pointer",
-          }}
-        >
-          📁 Vector
-        </button>
-        <button
-          onClick={() => setMode("web")}
-          style={{
-            padding: "8px 16px",
-            borderRadius: "8px",
-            border: "1px solid #000",
-            backgroundColor: mode === "web" ? "black" : "white",
-            color: mode === "web" ? "white" : "black",
-            fontWeight: "bold",
-            cursor: "pointer",
-          }}
-        >
-          🌍 Web
-        </button>
-      </div>
 
       {/* CHAT MESSAGES */}
       <div
@@ -84,7 +44,7 @@ export default function Page() {
           <div
             key={m.id}
             style={{
-              marginBottom: "8px",
+              marginBottom: 8,
               textAlign: m.role === "user" ? "right" : "left",
             }}
           >
@@ -92,7 +52,7 @@ export default function Page() {
               style={{
                 display: "inline-block",
                 padding: "6px 10px",
-                borderRadius: "12px",
+                borderRadius: 12,
                 backgroundColor: m.role === "user" ? "black" : "#eee",
                 color: m.role === "user" ? "white" : "black",
                 maxWidth: "80%",
@@ -107,8 +67,8 @@ export default function Page() {
         )}
       </div>
 
-      {/* INPUT FORM */}
-      <form onSubmit={handleSubmit} style={{ display: "flex", gap: "8px" }}>
+      {/* INPUT */}
+      <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8 }}>
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -116,7 +76,7 @@ export default function Page() {
           style={{
             flex: 1,
             padding: "8px 10px",
-            borderRadius: "8px",
+            borderRadius: 8,
             border: "1px solid #ccc",
           }}
         />
@@ -125,7 +85,7 @@ export default function Page() {
           disabled={status === "submitted" || status === "streaming"}
           style={{
             padding: "8px 16px",
-            borderRadius: "8px",
+            borderRadius: 8,
             border: "none",
             backgroundColor: "black",
             color: "white",

@@ -6,23 +6,17 @@ import { toast } from "sonner";
 import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useChat } from "@ai-sdk/react";
-import { ArrowUp, Eraser, Loader2, Plus, PlusIcon, Square } from "lucide-react";
-import { MessageWall } from "@/components/messages/message-wall";
-import { ChatHeader } from "@/app/parts/chat-header";
-import { ChatHeaderBlock } from "@/app/parts/chat-header";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ArrowUp, Eraser, Loader2, Plus } from "lucide-react";
 import { UIMessage } from "ai";
 import { useEffect, useState, useRef } from "react";
 import { AI_NAME, CLEAR_CHAT_TEXT, OWNER_NAME, WELCOME_MESSAGE } from "@/config";
 import Image from "next/image";
-import Link from "next/link";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ChatHeader } from "@/app/parts/chat-header";
+import { ChatHeaderBlock } from "@/app/parts/chat-header";
 
 const formSchema = z.object({
   message: z
@@ -31,7 +25,7 @@ const formSchema = z.object({
     .max(2000, "Message must be at most 2000 characters."),
 });
 
-const STORAGE_KEY = 'chat-messages';
+const STORAGE_KEY = "chat-messages";
 
 type StorageData = {
   messages: UIMessage[];
@@ -39,29 +33,25 @@ type StorageData = {
 };
 
 const loadMessagesFromStorage = (): { messages: UIMessage[]; durations: Record<string, number> } => {
-  if (typeof window === 'undefined') return { messages: [], durations: {} };
+  if (typeof window === "undefined") return { messages: [], durations: {} };
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) return { messages: [], durations: {} };
-
     const parsed = JSON.parse(stored);
-    return {
-      messages: parsed.messages || [],
-      durations: parsed.durations || {},
-    };
+    return { messages: parsed.messages || [], durations: parsed.durations || {} };
   } catch (error) {
-    console.error('Failed to load messages from localStorage:', error);
+    console.error("Failed to load messages:", error);
     return { messages: [], durations: {} };
   }
 };
 
 const saveMessagesToStorage = (messages: UIMessage[], durations: Record<string, number>) => {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   try {
     const data: StorageData = { messages, durations };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch (error) {
-    console.error('Failed to save messages to localStorage:', error);
+    console.error("Failed to save messages:", error);
   }
 };
 
@@ -70,12 +60,15 @@ export default function Chat() {
   const [durations, setDurations] = useState<Record<string, number>>({});
   const welcomeMessageShownRef = useRef<boolean>(false);
 
-  const stored = typeof window !== 'undefined' ? loadMessagesFromStorage() : { messages: [], durations: {} };
+  const stored = typeof window !== "undefined" ? loadMessagesFromStorage() : { messages: [], durations: {} };
   const [initialMessages] = useState<UIMessage[]>(stored.messages);
 
   const { messages, sendMessage, status, stop, setMessages } = useChat({
     messages: initialMessages,
   });
+
+  // 🔥 Vector / Web Toggle
+  const [mode, setMode] = useState<"vector" | "web">("vector");
 
   useEffect(() => {
     setIsClient(true);
@@ -84,64 +77,36 @@ export default function Chat() {
   }, []);
 
   useEffect(() => {
-    if (isClient) {
-      saveMessagesToStorage(messages, durations);
-    }
+    if (isClient) saveMessagesToStorage(messages, durations);
   }, [durations, messages, isClient]);
-
-  const handleDurationChange = (key: string, duration: number) => {
-    setDurations((prevDurations) => {
-      const newDurations = { ...prevDurations };
-      newDurations[key] = duration;
-      return newDurations;
-    });
-  };
 
   useEffect(() => {
     if (isClient && initialMessages.length === 0 && !welcomeMessageShownRef.current) {
       const welcomeMessage: UIMessage = {
         id: `welcome-${Date.now()}`,
         role: "assistant",
-        parts: [
-          {
-            type: "text",
-            text: WELCOME_MESSAGE,
-          },
-        ],
+        parts: [{ type: "text", text: WELCOME_MESSAGE }],
       };
+
       setMessages([welcomeMessage]);
       saveMessagesToStorage([welcomeMessage], {});
       welcomeMessageShownRef.current = true;
     }
   }, [isClient, initialMessages.length, setMessages]);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      message: "",
-    },
-  });
-
-  function onSubmit(data: z.infer<typeof formSchema>) {
-    sendMessage({ text: data.message });
-    form.reset();
-  }
-
   function clearChat() {
-    const newMessages: UIMessage[] = [];
-    const newDurations = {};
-    setMessages(newMessages);
-    setDurations(newDurations);
-    saveMessagesToStorage(newMessages, newDurations);
+    setMessages([]);
+    setDurations({});
+    saveMessagesToStorage([], {});
     toast.success("Chat cleared");
   }
 
   return (
-  <div className="flex h-screen items-center justify-center font-sans dark:bg-black">
-    <main className="w-full dark:bg-black h-screen relative">
-      {/* Fixed header stays exactly as you had it */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-linear-to-b from-background via-background/50 to-transparent dark:bg-black overflow-visible pb-16">
-        <div className="relative overflow-visible">
+    <div className="flex h-screen items-center justify-center font-sans dark:bg-black">
+      <main className="w-full dark:bg-black h-screen relative">
+
+        {/* 🔹 Header (unchanged) */}
+        <div className="fixed top-0 left-0 right-0 z-50 bg-linear-to-b from-background via-background/50 to-transparent dark:bg-black pb-16">
           <ChatHeader>
             <ChatHeaderBlock />
             <ChatHeaderBlock className="justify-center items-center">
@@ -166,51 +131,68 @@ export default function Chat() {
             </ChatHeaderBlock>
           </ChatHeader>
         </div>
-      </div>
 
-      {/* 🪟 Main chat area */}
-      <div className="pt-24 px-4 h-full flex justify-center">
-        <div className="chat-window w-full max-w-3xl flex flex-col gap-4 h-[calc(100vh-7rem)]">
-          {/* 💬 Messages list with bubbles */}
-          <div className="flex-1 overflow-y-auto">
-            {messages.map((m) => (
-              <div
-                key={m.id}
-                className={m.role === "user" ? "user-bubble" : "bot-bubble"}
+        {/* MAIN */}
+        <div className="pt-24 px-4 h-full flex justify-center">
+          <div className="chat-window w-full max-w-3xl flex flex-col gap-4 h-[calc(100vh-7rem)]">
+
+            {/* CHAT HISTORY */}
+            <div className="flex-1 overflow-y-auto">
+              {messages.map((m) => (
+                <div key={m.id} className={m.role === "user" ? "user-bubble" : "bot-bubble"}>
+                  {m.content}
+                </div>
+              ))}
+            </div>
+
+            {/* 🔥 MODE TOGGLE RIGHT ABOVE INPUT */}
+            <div className="flex gap-2 items-center px-4 pb-2">
+              <button
+                onClick={() => setMode("vector")}
+                className={`px-3 py-1 rounded-md text-sm font-semibold ${
+                  mode === "vector" ? "bg-primary text-white" : "bg-muted"
+                }`}
               >
-                {m.content}
-              </div>
-            ))}
-          </div>
+                📁 Vector DB
+              </button>
+              <button
+                onClick={() => setMode("web")}
+                className={`px-3 py-1 rounded-md text-sm font-semibold ${
+                  mode === "web" ? "bg-primary text-white" : "bg-muted"
+                }`}
+              >
+                🌐 Web Search
+              </button>
+            </div>
 
-          {/* ✍️ Input bar */}
-          <form
-            onSubmit={(e) => {
+            {/* INPUT */}
+            <form className="mt-2" onSubmit={(e) => {
               e.preventDefault();
               const formData = new FormData(e.currentTarget);
               const value = String(formData.get("message") || "").trim();
               if (!value || status === "pending") return;
 
-              sendMessage({ content: value, role: "user" });
+              if (mode === "vector") {
+                sendMessage({ content: value, role: "user" }); // Vector DB mode
+              } else {
+                console.log("🌍 Web search selected — integrate API next");
+                sendMessage({ content: `WEB SEARCH MODE: ${value}`, role: "user" });
+              }
+
               e.currentTarget.reset();
-            }}
-            className="mt-2"
-          >
-            <div className="input-bar w-full">
-              <input
-                name="message"
-                className="flex-1 bg-transparent outline-none"
-                placeholder="Ask me anything…"
-                disabled={status === "pending"}
-              />
-              <button type="submit" disabled={status === "pending"}>
-                {status === "pending" ? "Thinking…" : "Send"}
-              </button>
-            </div>
-          </form>
+            }}>
+              <div className="input-bar w-full">
+                <input name="message" className="flex-1 bg-transparent outline-none"
+                       placeholder="Ask something…" disabled={status === "pending"} />
+                <button type="submit" disabled={status === "pending"}>
+                  {status === "pending" ? "Thinking…" : "Send"}
+                </button>
+              </div>
+            </form>
+
+          </div>
         </div>
-      </div>
-    </main>
-  </div>
-);
+      </main>
+    </div>
+  );
 }

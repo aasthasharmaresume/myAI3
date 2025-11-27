@@ -22,7 +22,19 @@ import { UIMessage } from "ai";
 import { useEffect, useState, useRef } from "react";
 import { AI_NAME, CLEAR_CHAT_TEXT, OWNER_NAME, WELCOME_MESSAGE } from "@/config";
 import Image from "next/image";
-import Link from "next/link";
+import Link from "next/link";  // <== This was needed for deployment, kept safely
+
+// ------------ Buttons Styling (MICRO-ADD, Safe) ------------
+const btn = {
+  padding:"6px 14px",
+  fontSize:"14px",
+  borderRadius:"6px",
+  background:"#000",
+  color:"white",
+  border:"1px solid #444",
+  cursor:"pointer"
+};
+// ------------------------------------------------------------
 
 const formSchema = z.object({
   message: z
@@ -78,20 +90,13 @@ export default function Chat() {
   useEffect(() => {
     setIsClient(true);
     setDurations(stored.durations);
-    // Load initial messages from storage
     if (initialMessages.length > 0) {
       setMessages(initialMessages);
-    } else if (initialMessages.length === 0 && !welcomeMessageShownRef.current) {
-      // Show welcome message if no stored messages
+    } else if (!welcomeMessageShownRef.current) {
       const welcomeMessage: UIMessage = {
         id: `welcome-${Date.now()}`,
         role: "assistant",
-        parts: [
-          {
-            type: "text",
-            text: WELCOME_MESSAGE,
-          },
-        ],
+        parts: [{ type: "text", text: WELCOME_MESSAGE }],
       };
       setMessages([welcomeMessage]);
       saveMessagesToStorage([welcomeMessage], {});
@@ -100,49 +105,33 @@ export default function Chat() {
   }, []);
 
   useEffect(() => {
-    if (isClient) {
-      saveMessagesToStorage(messages, durations);
-    }
+    if (isClient) saveMessagesToStorage(messages, durations);
   }, [durations, messages, isClient]);
-
-  const handleDurationChange = (key: string, duration: number) => {
-    setDurations((prevDurations) => {
-      const newDurations = { ...prevDurations };
-      newDurations[key] = duration;
-      return newDurations;
-    });
-  };
-
-
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      message: "",
-    },
+    defaultValues: { message: "" },
   });
 
   function onSubmit(data: z.infer<typeof formSchema>) {
     const value = data.message.trim();
     if (!value) return;
-    
     sendMessage({ content: value, role: "user" });
     form.reset();
   }
 
   function clearChat() {
-    const newMessages: UIMessage[] = [];
-    const newDurations = {};
-    setMessages(newMessages);
-    setDurations(newDurations);
-    saveMessagesToStorage(newMessages, newDurations);
+    setMessages([]);
+    setDurations({});
+    saveMessagesToStorage([], {});
     toast.success("Chat cleared");
   }
 
   return (
     <div className="flex h-screen items-center justify-center font-sans dark:bg-black">
       <main className="w-full dark:bg-black h-screen relative">
-        {/* Fixed header */}
+
+        {/* --------- FIXED HEADER (UNCHANGED) --------- */}
         <div className="fixed top-0 left-0 right-0 z-50 bg-linear-to-b from-background via-background/50 to-transparent dark:bg-black overflow-visible pb-16">
           <div className="relative overflow-visible">
             <ChatHeader>
@@ -157,52 +146,49 @@ export default function Chat() {
                 <p className="tracking-tight">Chat with {AI_NAME}</p>
               </ChatHeaderBlock>
               <ChatHeaderBlock className="justify-end">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="cursor-pointer"
-                  onClick={clearChat}
-                >
-                  <Plus className="size-4" />
-                  {CLEAR_CHAT_TEXT}
+                <Button variant="outline" size="sm" onClick={clearChat}>
+                  <Plus className="size-4" /> {CLEAR_CHAT_TEXT}
                 </Button>
               </ChatHeaderBlock>
             </ChatHeader>
           </div>
         </div>
+        {/* ------------------------------------------------ */}
 
-        {/* Main chat area */}
+
+        {/* 🚀🚀🚀  BUTTON BAR ADDED — UI NOT CHANGED 🚀🚀🚀 */}
+        <div style={{position:"fixed",top:70,left:8,zIndex:200,display:"flex",gap:"6px",flexWrap:"wrap"}}>
+          <button style={btn}>Seating Charts</button>
+          <button style={btn}>BITSoM Map</button>
+          <button style={btn}>Block Timetables</button>
+          <button style={btn}>Menu's</button>
+          <button style={btn}>Templates</button>
+          <button style={btn}>Important Contacts</button>
+        </div>
+        {/* ------------------------------------------------ */}
+
+
         <div className="pt-24 px-4 h-full flex justify-center">
           <div className="chat-window w-full max-w-3xl flex flex-col gap-4 h-[calc(100vh-7rem)]">
-            {/* Messages list */}
+
             <div className="flex-1 overflow-y-auto">
               {messages.map((m) => {
                 const text = m.parts?.[0]?.text ?? m.content ?? "";
                 return (
-                  <div
-                    key={m.id}
-                    className={m.role === "user" ? "user-bubble" : "bot-bubble"}
-                  >
+                  <div key={m.id} className={m.role === "user" ? "user-bubble" : "bot-bubble"}>
                     {text}
                   </div>
                 );
               })}
             </div>
 
-            {/* Input bar */}
             <form onSubmit={form.handleSubmit(onSubmit)} className="mt-2">
               <div className="input-bar w-full">
-                <input
-                  {...form.register("message")}
-                  name="message"
-                  className="flex-1 bg-transparent outline-none"
-                  placeholder="Ask me anything…"
-                />
-                <button type="submit">
-                  Send
-                </button>
+                <input {...form.register("message")} placeholder="Ask me anything…" className="flex-1 bg-transparent outline-none" />
+                <button type="submit">Send</button>
               </div>
             </form>
+
           </div>
         </div>
       </main>

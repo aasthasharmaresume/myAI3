@@ -134,6 +134,13 @@ export default function Chat() {
     toast.success("Chat cleared");
   }
 
+ const handleDurationChange = (key: string, duration: number) => {
+    setDurations((prevDurations) => {
+      const newDurations = { ...prevDurations };
+      newDurations[key] = duration;
+      return newDurations;
+    });
+  };
 
   // ----------------- UI ----------------- //
 

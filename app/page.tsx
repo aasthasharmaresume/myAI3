@@ -73,7 +73,8 @@ export default function Chat() {
   const stored = typeof window !== 'undefined' ? loadMessagesFromStorage() : { messages: [], durations: {} };
   const [initialMessages] = useState<UIMessage[]>(stored.messages);
 
-  const { messages, sendMessage, status, stop, setMessages } = useChat({
+  // ⬇️ removed `status` and `stop` since we don't need them
+  const { messages, sendMessage, setMessages } = useChat({
     messages: initialMessages,
   });
 
@@ -122,12 +123,12 @@ export default function Chat() {
     },
   });
 
-  // ✅ FIXED: single, correct submit function
+  // ✅ unified, correct onSubmit
   function onSubmit(data: z.infer<typeof formSchema>) {
     const value = data.message.trim();
-    if (!value || status === "pending") return;
+    if (!value) return; // ⬅️ removed status check (caused TS error)
 
-    // useChat expects a UIMessage-like object (role + parts)
+    // useChat expects a UIMessage-like object
     sendMessage({
       role: "user",
       parts: [
@@ -188,7 +189,7 @@ export default function Chat() {
             {/* 💬 Messages list with bubbles */}
             <div className="flex-1 overflow-y-auto">
               {messages.map((m) => {
-                // ✅ safely extract text from parts or content
+                // ✅ safely extract text from parts (or fallback)
                 const text =
                   ((m as any).parts?.map((p: any) => p?.text ?? "").join(" ") ||
                     (m as any).content ||
@@ -205,7 +206,7 @@ export default function Chat() {
               })}
             </div>
 
-            {/* ✍️ Input bar – now uses react-hook-form + onSubmit */}
+            {/* ✍️ Input bar – now using react-hook-form's onSubmit */}
             <form onSubmit={form.handleSubmit(onSubmit)} className="mt-2">
               <div className="input-bar w-full">
                 <input
@@ -213,10 +214,9 @@ export default function Chat() {
                   name="message"
                   className="flex-1 bg-transparent outline-none"
                   placeholder="Ask me anything…"
-                  disabled={status === "pending"}
                 />
-                <button type="submit" disabled={status === "pending"}>
-                  {status === "pending" ? "Thinking…" : "Send"}
+                <button type="submit">
+                  Send
                 </button>
               </div>
             </form>

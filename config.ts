@@ -51,6 +51,17 @@ export const MODERATION_DENIAL_MESSAGE_SELF_HARM_INSTRUCTIONS = "I can't provide
 export const MODERATION_DENIAL_MESSAGE_VIOLENCE = "I can't discuss violent content. Please ask something else.";
 export const MODERATION_DENIAL_MESSAGE_VIOLENCE_GRAPHIC = "I can't discuss graphic violent content. Please ask something else.";
 export const MODERATION_DENIAL_MESSAGE_DEFAULT = "Your message violates our guidelines. I can't answer that.";
+export const MODERATION_DENIAL_MESSAGE_PRIVACY = "I can't help reveal private, personal, or confidential information about you or others.";
+export const MODERATION_DENIAL_MESSAGE_MEDICAL = "I can't provide medical diagnoses or treatment advice. Please consult a qualified healthcare professional.";
+export const MODERATION_DENIAL_MESSAGE_LEGAL = "I can't provide legal advice or assist with legal disputes. Please consult a legal professional.";
+export const MODERATION_DENIAL_MESSAGE_FINANCIAL = "I can't provide financial, tax, or investment advice. Please consult a qualified financial professional.";
+export const MODERATION_DENIAL_MESSAGE_EXTREMISM = "I can't support extremist, terrorist, or violent ideologies or organizations.";
+export const MODERATION_DENIAL_MESSAGE_MALWARE = "I can't help with hacking, bypassing security, or creating malware or harmful code.";
+export const MODERATION_DENIAL_MESSAGE_DRUGS = "I can't provide instructions for creating, distributing, or abusing illegal drugs or controlled substances.";
+export const MODERATION_DENIAL_MESSAGE_WEAPONS = "I can't help with building, acquiring, or using weapons, explosives, or other harmful devices.";
+export const MODERATION_DENIAL_MESSAGE_CHILD_SAFETY = "I can't assist with any content that risks the safety or wellbeing of minors.";
+export const MODERATION_DENIAL_MESSAGE_MISINFORMATION = "I can't intentionally generate or spread misinformation or harmful advice.";
+export const MODERATION_DENIAL_MESSAGE_IMPERSONATION = "I can't impersonate real people, forge identities, or create deceptive deepfakes.";
 
 export const PINECONE_TOP_K = 40;
 export const PINECONE_INDEX_NAME = "my-ai";

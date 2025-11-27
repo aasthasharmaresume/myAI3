@@ -80,8 +80,8 @@ export default function Chat() {
 
   const [initialMessages] = useState<UIMessage[]>(stored.messages);
 
-  // ✅ don't pass invalid options to useChat
-  const { messages, sendMessage, status, stop, setMessages } = useChat();
+  // ✅ Using append instead of sendMessage
+  const { messages, append, status, stop, setMessages } = useChat();
 
   useEffect(() => {
     setIsClient(true);
@@ -133,8 +133,11 @@ export default function Chat() {
   function onSubmit(data: z.infer<typeof formSchema>) {
     const text = data.message.trim();
     if (!text) return;
-    // ✅ correct sendMessage usage
-    sendMessage(text);
+    // ✅ Fixed: Using append with proper message object
+    append({
+      role: 'user',
+      content: text
+    });
     form.reset();
   }
 

@@ -73,15 +73,24 @@ export default function Chat() {
   const stored = typeof window !== 'undefined' ? loadMessagesFromStorage() : { messages: [], durations: {} };
   const [initialMessages] = useState<UIMessage[]>(stored.messages);
 
-  const { messages, sendMessage, status, stop, setMessages } = useChat({
-    initialMessages: initialMessages,
-  });
+  const { messages, sendMessage, status, stop, setMessages } = useChat();
 
   useEffect(() => {
     setIsClient(true);
     setDurations(stored.durations);
+    // Load initial messages from storage
     if (initialMessages.length > 0) {
       setMessages(initialMessages);
+    } else if (initialMessages.length === 0 && !welcomeMessageShownRef.current) {
+      // Show welcome message if no stored messages
+      const welcomeMessage: UIMessage = {
+        id: `welcome-${Date.now()}`,
+        role: "assistant",
+        content: WELCOME_MESSAGE,
+      };
+      setMessages([welcomeMessage]);
+      saveMessagesToStorage([welcomeMessage], {});
+      welcomeMessageShownRef.current = true;
     }
   }, []);
 
@@ -99,23 +108,7 @@ export default function Chat() {
     });
   };
 
-  useEffect(() => {
-    if (isClient && initialMessages.length === 0 && !welcomeMessageShownRef.current) {
-      const welcomeMessage: UIMessage = {
-        id: `welcome-${Date.now()}`,
-        role: "assistant",
-        parts: [
-          {
-            type: "text",
-            text: WELCOME_MESSAGE,
-          },
-        ],
-      };
-      setMessages([welcomeMessage]);
-      saveMessagesToStorage([welcomeMessage], {});
-      welcomeMessageShownRef.current = true;
-    }
-  }, [isClient, initialMessages.length, setMessages]);
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

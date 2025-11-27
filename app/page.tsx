@@ -166,20 +166,24 @@ export default function Chat() {
         <div className="pt-24 px-4 h-full flex justify-center">
           <div className="chat-window w-full max-w-3xl flex flex-col gap-4 h-[calc(100vh-7rem)]">
 
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto">
-
-              {messages.map((m) => {
-                m.parts.map((part, i) => {
-                  if (part.type === "text") {
-                    return <Response key = {m.id} part={part} className="bot-bubble" />;
-                  }
-                })
-              })}
-
+          <div className="h-screen overflow-y-auto px-5 py-4 w-full pt-[88px] pb-[150px]">
+            <div className="flex flex-col items-center justify-end min-h-full">
+              {isClient ? (
+                <>
+                  <MessageWall messages={messages} status={status} durations={durations} onDurationChange={handleDurationChange} />
+                  {status === "submitted" && (
+                    <div className="flex justify-start max-w-3xl w-full">
+                      <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex justify-center max-w-2xl w-full">
+                  <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                </div>
+              )}
             </div>
-
+          </div>
 
             {/* Input */}
             <form onSubmit={form.handleSubmit(onSubmit)} className="mt-2">

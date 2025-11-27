@@ -16,7 +16,8 @@ import { useEffect, useState, useRef } from "react";
 import { AI_NAME, CLEAR_CHAT_TEXT, WELCOME_MESSAGE } from "@/config";
 import Image from "next/image";
 
-// -------- Button style (safe) --------
+
+// === small safe style for your 6 buttons ===
 const btn = {
   padding:"6px 14px",
   fontSize:"14px",
@@ -27,6 +28,8 @@ const btn = {
   cursor:"pointer"
 };
 
+
+// === form validation ===
 const formSchema = z.object({
   message: z.string().min(1).max(2000),
 });
@@ -34,9 +37,9 @@ const formSchema = z.object({
 const STORAGE_KEY = "chat-messages";
 
 export default function Chat() {
+
   const [isClient, setIsClient] = useState(false);
-  const [durations, setDurations] = useState<Record<string,number>>({});
-  const welcomeMessageShownRef = useRef(false);
+  const welcomeRef = useRef(false);
 
   const stored = typeof window !== "undefined"
     ? JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}")
@@ -46,12 +49,16 @@ export default function Chat() {
 
   const { messages, sendMessage, setMessages } = useChat();
 
+
+  // === load welcome message ===
   useEffect(() => {
     setIsClient(true);
 
     if(initialMessages.length > 0){
       setMessages(initialMessages);
-    } else if(!welcomeMessageShownRef.current){
+
+    } else if(!welcomeRef.current){
+
       setMessages([
         {
           id:`welcome-${Date.now()}`,
@@ -59,16 +66,19 @@ export default function Chat() {
           parts:[{ type:"text", text:WELCOME_MESSAGE }]
         }
       ]);
-      welcomeMessageShownRef.current = true;
+
+      welcomeRef.current = true;
     }
   },[]);
+
 
   const form = useForm({
     resolver:zodResolver(formSchema),
     defaultValues:{ message:"" }
   });
 
-  // ============ FINAL FIX ❗==============  
+
+  // === FINAL FIX → SEND PROPER MESSAGE SHAPE ===
   function onSubmit(data:any) {
     const value = data.message.trim();
     if(!value) return;
@@ -76,35 +86,40 @@ export default function Chat() {
     sendMessage({
       role:"user",
       parts:[{ type:"text", text:value }]
-    }); 
-    // ^ This matches the required UIMessage type 100%
+    });
 
     form.reset();
   }
-  // ======================================
 
+
+  // === clear chat feature ===
   function clearChat(){
     setMessages([]);
     toast.success("Chat cleared");
   }
 
+
   return (
     <div className="flex h-screen items-center justify-center font-sans dark:bg-black">
       <main className="w-full dark:bg-black h-screen relative">
 
-        {/* HEADER */}
+
+        {/* ---------------- HEADER UI (unchanged) ---------------- */}
         <div className="fixed top-0 left-0 right-0 z-50 dark:bg-black pb-16">
           <ChatHeader>
-            <ChatHeaderBlock/>
+            <ChatHeaderBlock />
             <ChatHeaderBlock className="justify-center items-center">
+
               <Avatar className="size-8 ring-1 ring-primary">
                 <AvatarImage src="/Unknown.png"/>
                 <AvatarFallback>
                   <Image src="/Unknown.png" alt="Logo" width={36} height={36}/>
                 </AvatarFallback>
               </Avatar>
+
               <p>Chat with {AI_NAME}</p>
             </ChatHeaderBlock>
+
             <ChatHeaderBlock className="justify-end">
               <Button variant="outline" size="sm" onClick={clearChat}>
                 <Plus className="size-4"/>{CLEAR_CHAT_TEXT}
@@ -112,8 +127,10 @@ export default function Chat() {
             </ChatHeaderBlock>
           </ChatHeader>
         </div>
+        {/* -------------------------------------------------------- */}
 
-        {/* BUTTONS (UI preserved exactly) */}
+
+        {/* ---------------- BUTTON BAR (safe + simple) ------------ */}
         <div style={{position:"fixed",top:70,left:8,zIndex:200,display:"flex",gap:"6px",flexWrap:"wrap"}}>
           <button style={btn}>Seating Charts</button>
           <button style={btn}>BITSoM Map</button>
@@ -122,22 +139,34 @@ export default function Chat() {
           <button style={btn}>Templates</button>
           <button style={btn}>Important Contacts</button>
         </div>
+        {/* -------------------------------------------------------- */}
 
-        {/* CHAT BODY */}
+
+        {/* ---------------- CHAT WINDOW (unchanged UI) ------------ */}
         <div className="pt-24 px-4 h-full flex justify-center">
           <div className="chat-window w-full max-w-3xl flex flex-col gap-4 h-[calc(100vh-7rem)]">
 
+
+            {/* Display messages */}
             <div className="flex-1 overflow-y-auto">
-              {messages.map(m=>{
-                const text = m.parts?.[0]?.text ?? "";
+              {messages.map((m)=>{
+
+                // 🔥 The correct + safe text extraction fix:
+                const text =
+                  (m as any).parts?.[0]?.text ??
+                  (m as any).content ??
+                  "";
+
                 return(
-                  <div key={m.id} className={m.role==="user"?"user-bubble":"bot-bubble"}>
+                  <div key={m.id} className={m.role==="user" ? "user-bubble" : "bot-bubble"}>
                     {text}
                   </div>
                 );
               })}
             </div>
 
+
+            {/* Input bar */}
             <form onSubmit={form.handleSubmit(onSubmit)} className="mt-2">
               <div className="input-bar w-full">
                 <input {...form.register("message")} placeholder="Ask me anything…" className="flex-1 bg-transparent outline-none"/>
@@ -147,6 +176,9 @@ export default function Chat() {
 
           </div>
         </div>
+        {/* -------------------------------------------------------- */}
+
+
       </main>
     </div>
   );

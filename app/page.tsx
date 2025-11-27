@@ -31,15 +31,15 @@ const formSchema = z.object({
     .max(2000, "Message must be at most 2000 characters."),
 });
 
-const STORAGE_KEY = "chat-messages";
+const STORAGE_KEY = 'chat-messages';
 
 type StorageData = {
   messages: UIMessage[];
   durations: Record<string, number>;
 };
 
-const loadMessagesFromStorage = (): StorageData => {
-  if (typeof window === "undefined") return { messages: [], durations: {} };
+const loadMessagesFromStorage = (): { messages: UIMessage[]; durations: Record<string, number> } => {
+  if (typeof window === 'undefined') return { messages: [], durations: {} };
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) return { messages: [], durations: {} };
@@ -50,21 +50,18 @@ const loadMessagesFromStorage = (): StorageData => {
       durations: parsed.durations || {},
     };
   } catch (error) {
-    console.error("Failed to load messages from localStorage:", error);
+    console.error('Failed to load messages from localStorage:', error);
     return { messages: [], durations: {} };
   }
 };
 
-const saveMessagesToStorage = (
-  messages: UIMessage[],
-  durations: Record<string, number>
-) => {
-  if (typeof window === "undefined") return;
+const saveMessagesToStorage = (messages: UIMessage[], durations: Record<string, number>) => {
+  if (typeof window === 'undefined') return;
   try {
     const data: StorageData = { messages, durations };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch (error) {
-    console.error("Failed to save messages from localStorage:", error);
+    console.error('Failed to save messages to localStorage:', error);
   }
 };
 
@@ -73,15 +70,12 @@ export default function Chat() {
   const [durations, setDurations] = useState<Record<string, number>>({});
   const welcomeMessageShownRef = useRef<boolean>(false);
 
-  const stored =
-    typeof window !== "undefined"
-      ? loadMessagesFromStorage()
-      : { messages: [], durations: {} };
-
+  const stored = typeof window !== 'undefined' ? loadMessagesFromStorage() : { messages: [], durations: {} };
   const [initialMessages] = useState<UIMessage[]>(stored.messages);
 
-  // ✅ Using append instead of sendMessage
-  const { messages, append, status, stop, setMessages } = useChat();
+  const { messages, sendMessage, status, stop, setMessages } = useChat({
+    initialMessages: initialMessages,
+  });
 
   useEffect(() => {
     setIsClient(true);
@@ -89,11 +83,11 @@ export default function Chat() {
     if (initialMessages.length > 0) {
       setMessages(initialMessages);
     }
-  }, []); // run once
+  }, []);
 
   useEffect(() => {
     if (isClient) {
-      saveMessagesToStorage(messages as UIMessage[], durations);
+      saveMessagesToStorage(messages, durations);
     }
   }, [durations, messages, isClient]);
 
@@ -131,19 +125,16 @@ export default function Chat() {
   });
 
   function onSubmit(data: z.infer<typeof formSchema>) {
-    const text = data.message.trim();
-    if (!text) return;
-    // ✅ Fixed: Using append with proper message object
-    append({
-      role: 'user',
-      content: text
-    });
+    const value = data.message.trim();
+    if (!value || status === "pending") return;
+    
+    sendMessage({ content: value, role: "user" });
     form.reset();
   }
 
   function clearChat() {
     const newMessages: UIMessage[] = [];
-    const newDurations: Record<string, number> = {};
+    const newDurations = {};
     setMessages(newMessages);
     setDurations(newDurations);
     saveMessagesToStorage(newMessages, newDurations);
@@ -153,7 +144,7 @@ export default function Chat() {
   return (
     <div className="flex h-screen items-center justify-center font-sans dark:bg-black">
       <main className="w-full dark:bg-black h-screen relative">
-        {/* Fixed header stays exactly as you had it */}
+        {/* Fixed header */}
         <div className="fixed top-0 left-0 right-0 z-50 bg-linear-to-b from-background via-background/50 to-transparent dark:bg-black overflow-visible pb-16">
           <div className="relative overflow-visible">
             <ChatHeader>
@@ -182,41 +173,33 @@ export default function Chat() {
           </div>
         </div>
 
-        {/* 🪟 Main chat area */}
+        {/* Main chat area */}
         <div className="pt-24 px-4 h-full flex justify-center">
           <div className="chat-window w-full max-w-3xl flex flex-col gap-4 h-[calc(100vh-7rem)]">
-            {/* 💬 Messages list with bubbles */}
+            {/* Messages list */}
             <div className="flex-1 overflow-y-auto">
-              {messages.map((m) => {
-                // Extract text from either parts or content structure
-                const text = m.parts?.[0]?.text ?? (typeof m.content === 'string' ? m.content : '');
-                
-                return (
-                  <div
-                    key={m.id}
-                    className={m.role === "user" ? "user-bubble" : "bot-bubble"}
-                  >
-                    {text}
-                  </div>
-                );
-              })}
+              {messages.map((m) => (
+                <div
+                  key={m.id}
+                  className={m.role === "user" ? "user-bubble" : "bot-bubble"}
+                >
+                  {m.content}
+                </div>
+              ))}
             </div>
 
-            {/* ✍️ Input bar */}
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="mt-2"
-            >
+            {/* Input bar */}
+            <form onSubmit={form.handleSubmit(onSubmit)} className="mt-2">
               <div className="input-bar w-full">
                 <input
                   {...form.register("message")}
                   name="message"
                   className="flex-1 bg-transparent outline-none"
                   placeholder="Ask me anything…"
-                  // keep enabled so you can always type
+                  disabled={status === "pending"}
                 />
-                <button type="submit">
-                  Send
+                <button type="submit" disabled={status === "pending"}>
+                  {status === "pending" ? "Thinking…" : "Send"}
                 </button>
               </div>
             </form>

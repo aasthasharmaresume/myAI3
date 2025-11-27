@@ -171,16 +171,6 @@ export default function Chat() {
             <div className="flex-1 overflow-y-auto">
 
               {messages.map((m) => {
-                const text = (m.parts?.map((p) => p?.text || "").join(" ") || m.content || "") as string;
-
-                if (m.role === "user") {
-                  return (
-                    <div key={m.id} className="user-bubble">
-                      {text}
-                    </div>
-                  );
-                }
-
                 // 🔥 AI message now uses <Response />, but styled same as before
                 return <Response key={m.id} message={m} className="bot-bubble" />;
               })}

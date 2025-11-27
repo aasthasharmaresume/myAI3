@@ -1,26 +1,34 @@
 "use client";
 
+// ===== Validation / Forms =====
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { MessageWall } from "@/components/messages/message-wall";
 import * as z from "zod";
+import { useForm, Controller } from "react-hook-form";
 
+// ===== UI Components =====
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-
-import { useChat } from "@ai-sdk/react";
-import { ChatHeader } from "@/app/parts/chat-header";
-import { ChatHeaderBlock } from "@/app/parts/chat-header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { MessageWall } from "@/components/messages/message-wall";
+import { ChatHeader, ChatHeaderBlock } from "@/app/parts/chat-header";
 
+// ===== AI + Messages =====
+import { useChat } from "@ai-sdk/react";
 import { UIMessage } from "ai";
-import { useEffect, useState, useRef } from "react";
-import { Response } from "@/components/ai-elements/response";  // << NEW import here
+import { Response } from "@/components/ai-elements/response";
 
-import { AI_NAME, CLEAR_CHAT_TEXT, WELCOME_MESSAGE } from "@/config";
+// ===== Icons =====
+import { ArrowUp, Eraser, Loader2, Plus, PlusIcon, Square } from "lucide-react";
+
+// ===== Utils =====
+import { useEffect, useState, useRef } from "react";
+import { toast } from "sonner";
 import Image from "next/image";
+import Link from "next/link";
+
+// ===== App Constants =====
+import { AI_NAME, CLEAR_CHAT_TEXT, OWNER_NAME, WELCOME_MESSAGE } from "@/config";
 
 
 // ----------------- FORM SCHEMA ----------------- //

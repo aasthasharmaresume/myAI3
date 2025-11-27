@@ -86,7 +86,12 @@ export default function Chat() {
       const welcomeMessage: UIMessage = {
         id: `welcome-${Date.now()}`,
         role: "assistant",
-        content: WELCOME_MESSAGE,
+        parts: [
+          {
+            type: "text",
+            text: WELCOME_MESSAGE,
+          },
+        ],
       };
       setMessages([welcomeMessage]);
       saveMessagesToStorage([welcomeMessage], {});
@@ -171,14 +176,17 @@ export default function Chat() {
           <div className="chat-window w-full max-w-3xl flex flex-col gap-4 h-[calc(100vh-7rem)]">
             {/* Messages list */}
             <div className="flex-1 overflow-y-auto">
-              {messages.map((m) => (
-                <div
-                  key={m.id}
-                  className={m.role === "user" ? "user-bubble" : "bot-bubble"}
-                >
-                  {m.content}
-                </div>
-              ))}
+              {messages.map((m) => {
+                const text = m.parts?.[0]?.text ?? m.content ?? "";
+                return (
+                  <div
+                    key={m.id}
+                    className={m.role === "user" ? "user-bubble" : "bot-bubble"}
+                  >
+                    {text}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Input bar */}

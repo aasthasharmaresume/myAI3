@@ -124,7 +124,7 @@ export default function Chat() {
 
   function onSubmit(data: z.infer<typeof formSchema>) {
     const value = data.message.trim();
-    if (!value || status === "pending") return;
+    if (!value) return;
     
     sendMessage({ content: value, role: "user" });
     form.reset();
@@ -197,10 +197,9 @@ export default function Chat() {
                   name="message"
                   className="flex-1 bg-transparent outline-none"
                   placeholder="Ask me anything…"
-                  disabled={status === "pending"}
                 />
-                <button type="submit" disabled={status === "pending"}>
-                  {status === "pending" ? "Thinking…" : "Send"}
+                <button type="submit">
+                  Send
                 </button>
               </div>
             </form>

@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useChat } from "@ai-sdk/react";
-import { Plus } from "lucide-react";
+import { ArrowUp, Eraser, Loader2, Plus, PlusIcon, Square } from "lucide-react";
 import { MessageWall } from "@/components/messages/message-wall";
 import { ChatHeader } from "@/app/parts/chat-header";
 import { ChatHeaderBlock } from "@/app/parts/chat-header";
@@ -31,18 +31,15 @@ const formSchema = z.object({
     .max(2000, "Message must be at most 2000 characters."),
 });
 
-const STORAGE_KEY = "chat-messages";
+const STORAGE_KEY = 'chat-messages';
 
 type StorageData = {
   messages: UIMessage[];
   durations: Record<string, number>;
 };
 
-const loadMessagesFromStorage = (): {
-  messages: UIMessage[];
-  durations: Record<string, number>;
-} => {
-  if (typeof window === "undefined") return { messages: [], durations: {} };
+const loadMessagesFromStorage = (): { messages: UIMessage[]; durations: Record<string, number> } => {
+  if (typeof window === 'undefined') return { messages: [], durations: {} };
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) return { messages: [], durations: {} };
@@ -53,21 +50,18 @@ const loadMessagesFromStorage = (): {
       durations: parsed.durations || {},
     };
   } catch (error) {
-    console.error("Failed to load messages from localStorage:", error);
+    console.error('Failed to load messages from localStorage:', error);
     return { messages: [], durations: {} };
   }
 };
 
-const saveMessagesToStorage = (
-  messages: UIMessage[],
-  durations: Record<string, number>
-) => {
-  if (typeof window === "undefined") return;
+const saveMessagesToStorage = (messages: UIMessage[], durations: Record<string, number>) => {
+  if (typeof window === 'undefined') return;
   try {
     const data: StorageData = { messages, durations };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch (error) {
-    console.error("Failed to save messages to localStorage:", error);
+    console.error('Failed to save messages to localStorage:', error);
   }
 };
 
@@ -76,20 +70,35 @@ export default function Chat() {
   const [durations, setDurations] = useState<Record<string, number>>({});
   const welcomeMessageShownRef = useRef<boolean>(false);
 
-  const stored =
-    typeof window !== "undefined"
-      ? loadMessagesFromStorage()
-      : { messages: [], durations: {} };
+  const stored = typeof window !== 'undefined' ? loadMessagesFromStorage() : { messages: [], durations: {} };
   const [initialMessages] = useState<UIMessage[]>(stored.messages);
 
-  const { messages, sendMessage, status, stop, setMessages } = useChat();
+  const { messages, sendMessage, status, stop, setMessages } = useChat({
+    messages: initialMessages,
+  });
 
   useEffect(() => {
     setIsClient(true);
     setDurations(stored.durations);
-    if (initialMessages.length > 0) {
-      setMessages(initialMessages);
-    } else if (!welcomeMessageShownRef.current) {
+    setMessages(stored.messages);
+  }, []);
+
+  useEffect(() => {
+    if (isClient) {
+      saveMessagesToStorage(messages, durations);
+    }
+  }, [durations, messages, isClient]);
+
+  const handleDurationChange = (key: string, duration: number) => {
+    setDurations((prevDurations) => {
+      const newDurations = { ...prevDurations };
+      newDurations[key] = duration;
+      return newDurations;
+    });
+  };
+
+  useEffect(() => {
+    if (isClient && initialMessages.length === 0 && !welcomeMessageShownRef.current) {
       const welcomeMessage: UIMessage = {
         id: `welcome-${Date.now()}`,
         role: "assistant",
@@ -104,13 +113,7 @@ export default function Chat() {
       saveMessagesToStorage([welcomeMessage], {});
       welcomeMessageShownRef.current = true;
     }
-  }, []);
-
-  useEffect(() => {
-    if (isClient) {
-      saveMessagesToStorage(messages, durations);
-    }
-  }, [durations, messages, isClient]);
+  }, [isClient, initialMessages.length, setMessages]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -119,11 +122,12 @@ export default function Chat() {
     },
   });
 
-  // ✅ Correct message shape for useChat
+  // ✅ FIXED: single, correct submit function
   function onSubmit(data: z.infer<typeof formSchema>) {
     const value = data.message.trim();
-    if (!value) return;
+    if (!value || status === "pending") return;
 
+    // useChat expects a UIMessage-like object (role + parts)
     sendMessage({
       role: "user",
       parts: [
@@ -149,7 +153,7 @@ export default function Chat() {
   return (
     <div className="flex h-screen items-center justify-center font-sans dark:bg-black">
       <main className="w-full dark:bg-black h-screen relative">
-        {/* Fixed header */}
+        {/* Fixed header stays exactly as you had it */}
         <div className="fixed top-0 left-0 right-0 z-50 bg-linear-to-b from-background via-background/50 to-transparent dark:bg-black overflow-visible pb-16">
           <div className="relative overflow-visible">
             <ChatHeader>
@@ -178,45 +182,22 @@ export default function Chat() {
           </div>
         </div>
 
-        {/* Main chat area */}
+        {/* 🪟 Main chat area */}
         <div className="pt-24 px-4 h-full flex justify-center">
           <div className="chat-window w-full max-w-3xl flex flex-col gap-4 h-[calc(100vh-7rem)]">
-            {/* 🎯 THEMED BUTTON BAR – below header, not clickable */}
-            <div className="flex flex-wrap gap-2 mb-4 justify-center">
-              {[
-                "Seating Charts",
-                "BITSoM Map",
-                "Block Timetables",
-                "Menu's",
-                "Templates",
-                "Important Contacts",
-              ].map((label) => (
-                <button
-                  key={label}
-                  type="button"
-                  className="rounded-full px-4 py-1.5 text-xs md:text-sm bg-amber-900/70 text-white shadow-sm"
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            {/* Messages list */}
+            {/* 💬 Messages list with bubbles */}
             <div className="flex-1 overflow-y-auto">
               {messages.map((m) => {
-                // ✅ Safely pull text from parts array (bot + user)
-                const parts = (m as any).parts || [];
-                const text = parts
-                  .map((p: any) => p?.text ?? "")
-                  .filter(Boolean)
-                  .join(" ");
+                // ✅ safely extract text from parts or content
+                const text =
+                  ((m as any).parts?.map((p: any) => p?.text ?? "").join(" ") ||
+                    (m as any).content ||
+                    "") as string;
 
                 return (
                   <div
                     key={m.id}
-                    className={`${
-                      m.role === "user" ? "user-bubble" : "bot-bubble"
-                    } text-white`}
+                    className={m.role === "user" ? "user-bubble" : "bot-bubble"}
                   >
                     {text}
                   </div>
@@ -224,7 +205,7 @@ export default function Chat() {
               })}
             </div>
 
-            {/* Input bar */}
+            {/* ✍️ Input bar – now uses react-hook-form + onSubmit */}
             <form onSubmit={form.handleSubmit(onSubmit)} className="mt-2">
               <div className="input-bar w-full">
                 <input
@@ -232,8 +213,11 @@ export default function Chat() {
                   name="message"
                   className="flex-1 bg-transparent outline-none"
                   placeholder="Ask me anything…"
+                  disabled={status === "pending"}
                 />
-                <button type="submit">Send</button>
+                <button type="submit" disabled={status === "pending"}>
+                  {status === "pending" ? "Thinking…" : "Send"}
+                </button>
               </div>
             </form>
           </div>

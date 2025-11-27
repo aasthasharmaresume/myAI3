@@ -187,15 +187,19 @@ export default function Chat() {
           <div className="chat-window w-full max-w-3xl flex flex-col gap-4 h-[calc(100vh-7rem)]">
             {/* 💬 Messages list with bubbles */}
             <div className="flex-1 overflow-y-auto">
-              {messages.map((m: any) => (
-                <div
-                  key={m.id}
-                  className={m.role === "user" ? "user-bubble" : "bot-bubble"}
-                >
-                  {/* use parts[0].text or fall back */}
-                  {m.parts?.[0]?.text ?? m.content ?? ""}
-                </div>
-              ))}
+              {messages.map((m) => {
+                // Extract text from either parts or content structure
+                const text = m.parts?.[0]?.text ?? (typeof m.content === 'string' ? m.content : '');
+                
+                return (
+                  <div
+                    key={m.id}
+                    className={m.role === "user" ? "user-bubble" : "bot-bubble"}
+                  >
+                    {text}
+                  </div>
+                );
+              })}
             </div>
 
             {/* ✍️ Input bar */}
